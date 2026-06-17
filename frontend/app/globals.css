@@ -1,0 +1,64 @@
+@import "tailwindcss";
+
+:root {
+  --background: #eef3f7;
+  --surface: #ffffff;
+  --surface-muted: #f5f7fa;
+  --ink: #151821;
+  --ink-muted: #667085;
+  --line: #d9e0e8;
+  --blue: #4f5cf6;
+  --green: #12a150;
+  --red: #df3e3e;
+  --yellow: #f3b51b;
+  --teal: #2fd8d2;
+  --orange: #ff7a3d;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  background: var(--background);
+}
+
+body {
+  min-height: 100vh;
+  margin: 0;
+  color: var(--ink);
+  background:
+    radial-gradient(circle at top left, rgba(79, 92, 246, 0.08), transparent 34rem),
+    var(--background);
+  font-family: Arial, Helvetica, sans-serif;
+  letter-spacing: 0;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(22rem, 0.95fr);
+  gap: 1rem;
+}
+
+.widget-card {
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 12px 30px rgba(39, 50, 73, 0.08);
+}
+
+@media (max-width: 980px) {
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+}
