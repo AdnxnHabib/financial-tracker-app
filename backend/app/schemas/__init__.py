@@ -6,7 +6,12 @@ from .dashboard import (
     MonthlyExpenseRead,
     RecentExpenseRead,
 )
-from .transactions import TransactionCreate, TransactionRead, TransactionUpdate
+from .transactions import (
+    RecentTransactionRead,
+    TransactionCreate,
+    TransactionRead,
+    TransactionUpdate,
+)
 
 __all__ = [
     "AccountCreate",
@@ -19,6 +24,7 @@ __all__ = [
     "DashboardRead",
     "MonthlyExpenseRead",
     "RecentExpenseRead",
+    "RecentTransactionRead",
     "TransactionCreate",
     "TransactionRead",
     "TransactionUpdate",
