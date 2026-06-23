@@ -1,18 +1,16 @@
 from typing import List
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 
-from app.repositories.transactions import InMemoryTransactionRepository
-from app.schemas.transactions import TransactionCreate, TransactionRead
+from app.dependencies import get_transaction_service
+from app.schemas.transactions import (
+    RecentTransactionRead,
+    TransactionCreate,
+    TransactionRead,
+)
 from app.services.transactions import TransactionService
 
 router = APIRouter(prefix="/transactions", tags=["transactions"])
-
-transaction_repository = InMemoryTransactionRepository()
-
-
-def get_transaction_service() -> TransactionService:
-    return TransactionService(transaction_repository)
 
 
 @router.post("", response_model=TransactionRead, status_code=201)
@@ -28,3 +26,11 @@ def list_transactions(
     service: TransactionService = Depends(get_transaction_service),
 ):
     return service.list_transactions()
+
+
+@router.get("/recent", response_model=List[RecentTransactionRead])
+def list_recent_transactions(
+    limit: int = Query(default=5, ge=1, le=50),
+    service: TransactionService = Depends(get_transaction_service),
+):
+    return service.list_recent_transactions(limit=limit)

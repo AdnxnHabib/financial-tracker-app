@@ -59,3 +59,8 @@ class TransactionUpdate(APIModel):
 
 class TransactionRead(TransactionBase, TimestampedRead):
     external_id: Optional[str] = None
+
+
+class RecentTransactionRead(TransactionRead):
+    account_name: str
+    category_name: Optional[str] = None

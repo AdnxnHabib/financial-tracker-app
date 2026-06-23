@@ -22,3 +22,14 @@ class InMemoryTransactionRepository:
 
     def list(self) -> List[TransactionRead]:
         return list(self._transactions)
+
+    def list_recent(self, limit: int) -> List[TransactionRead]:
+        transactions = sorted(
+            self._transactions,
+            key=lambda transaction: (
+                transaction.transaction_date,
+                transaction.created_at,
+            ),
+            reverse=True,
+        )
+        return transactions[:limit]
