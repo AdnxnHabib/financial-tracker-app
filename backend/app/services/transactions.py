@@ -4,8 +4,9 @@ from app.repositories.accounts import InMemoryAccountRepository
 from app.repositories.categories import InMemoryCategoryRepository
 from app.repositories.transactions import InMemoryTransactionRepository
 from app.schemas.transactions import (
-    RecentTransactionRead,
     TransactionCreate,
+    TransactionFilters,
+    TransactionListRead,
     TransactionRead,
 )
 
@@ -24,12 +25,12 @@ class TransactionService:
     def create_transaction(self, transaction: TransactionCreate) -> TransactionRead:
         return self._repository.create(transaction)
 
-    def list_transactions(self) -> List[TransactionRead]:
-        return self._repository.list()
-
-    def list_recent_transactions(self, limit: int) -> List[RecentTransactionRead]:
-        transactions = self._repository.list_recent(limit)
-        recent_transactions: List[RecentTransactionRead] = []
+    def list_transactions(
+        self,
+        filters: TransactionFilters,
+    ) -> List[TransactionListRead]:
+        transactions = self._repository.list(filters)
+        transaction_list: List[TransactionListRead] = []
 
         for transaction in transactions:
             account = self._account_repository.get(transaction.account_id)
@@ -38,12 +39,12 @@ class TransactionService:
                 if transaction.category_id is not None
                 else None
             )
-            recent_transactions.append(
-                RecentTransactionRead(
+            transaction_list.append(
+                TransactionListRead(
                     **transaction.model_dump(),
                     account_name=account.name if account else "Unknown account",
                     category_name=category.name if category else None,
                 )
             )
 
-        return recent_transactions
+        return transaction_list

@@ -1,11 +1,12 @@
 from typing import List
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends
 
 from app.dependencies import get_transaction_service
 from app.schemas.transactions import (
-    RecentTransactionRead,
     TransactionCreate,
+    TransactionFilters,
+    TransactionListRead,
     TransactionRead,
 )
 from app.services.transactions import TransactionService
@@ -21,16 +22,9 @@ def create_transaction(
     return service.create_transaction(transaction)
 
 
-@router.get("", response_model=List[TransactionRead])
+@router.get("", response_model=List[TransactionListRead])
 def list_transactions(
+    filters: TransactionFilters = Depends(),
     service: TransactionService = Depends(get_transaction_service),
 ):
-    return service.list_transactions()
-
-
-@router.get("/recent", response_model=List[RecentTransactionRead])
-def list_recent_transactions(
-    limit: int = Query(default=5, ge=1, le=50),
-    service: TransactionService = Depends(get_transaction_service),
-):
-    return service.list_recent_transactions(limit=limit)
+    return service.list_transactions(filters)
