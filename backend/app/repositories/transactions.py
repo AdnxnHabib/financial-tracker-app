@@ -37,6 +37,9 @@ class InMemoryTransactionRepository:
         )
         return transactions[filters.offset : filters.offset + filters.limit]
 
+    def list_all(self) -> List[TransactionRead]:
+        return list(self._transactions)
+
     def _matches_filters(
         self,
         transaction: TransactionRead,

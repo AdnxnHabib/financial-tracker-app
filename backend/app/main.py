@@ -2,6 +2,7 @@ from fastapi import FastAPI
 
 from app.routes.accounts import router as accounts_router
 from app.routes.categories import router as categories_router
+from app.routes.dashboard import router as dashboard_router
 from app.routes.transactions import router as transactions_router
 
 
@@ -26,6 +27,7 @@ def create_app() -> FastAPI:
 
     app.include_router(accounts_router)
     app.include_router(categories_router)
+    app.include_router(dashboard_router)
     app.include_router(transactions_router)
 
     return app
