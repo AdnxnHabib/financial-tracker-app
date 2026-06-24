@@ -13,9 +13,11 @@ router = APIRouter(prefix="/dashboard", tags=["dashboard"])
 def get_dashboard_summary(
     year: Optional[int] = Query(default=None, ge=2000, le=2100),
     month: Optional[int] = Query(default=None, ge=1, le=12),
+    months: Optional[int] = Query(default=None, ge=1, le=12),
     service: DashboardService = Depends(get_dashboard_service),
 ):
     return service.get_summary(
         year=year,
         month=month,
+        months=months,
     )

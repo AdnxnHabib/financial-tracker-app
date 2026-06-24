@@ -37,11 +37,24 @@ def make_client_with_repositories():
 def test_dashboard_summary_starts_empty():
     client, _, _, _ = make_client_with_repositories()
 
-    response = client.get("/dashboard/summary?year=2026&month=6")
+    response = client.get("/dashboard/summary?year=2026&month=6&months=2")
 
     assert response.status_code == 200
     assert response.json() == {
-        "monthly_expenses": [],
+        "monthly_expenses": [
+            {
+                "month": "2026-05",
+                "spent_cents": 0,
+                "budget_cents": None,
+                "currency": "USD",
+            },
+            {
+                "month": "2026-06",
+                "spent_cents": 0,
+                "budget_cents": None,
+                "currency": "USD",
+            },
+        ],
         "top_categories": [],
         "recent_expenses": [],
     }
@@ -100,6 +113,18 @@ def test_dashboard_summary_returns_monthly_category_and_recent_expenses():
     transaction_repository.create(
         TransactionCreate(
             account_id=account.id,
+            category_id=dining.id,
+            transaction_type="expense",
+            amount_cents=1500,
+            currency="CAD",
+            transaction_date=date(2026, 6, 22),
+            merchant_name="Canadian Cafe",
+            payment_method="card",
+        )
+    )
+    transaction_repository.create(
+        TransactionCreate(
+            account_id=account.id,
             category_id=groceries.id,
             transaction_type="expense",
             amount_cents=1000,
@@ -118,23 +143,32 @@ def test_dashboard_summary_returns_monthly_category_and_recent_expenses():
         )
     )
 
-    response = client.get("/dashboard/summary?year=2026&month=6")
+    response = client.get("/dashboard/summary?year=2026&month=6&months=2")
 
     assert response.status_code == 200
     body = response.json()
     assert body["monthly_expenses"] == [
         {
-            "month": "2026-06",
-            "spent_cents": 7500,
+            "month": "2026-05",
+            "spent_cents": 1000,
             "budget_cents": None,
             "currency": "USD",
-        }
+        },
+        {
+            "month": "2026-06",
+            "spent_cents": 9000,
+            "budget_cents": None,
+            "currency": "USD",
+        },
     ]
     assert body["top_categories"][0]["category_name"] == "Groceries"
     assert body["top_categories"][0]["spent_cents"] == 5000
-    assert body["top_categories"][0]["percent_of_total"] == 5000 / 7500 * 100
+    assert body["top_categories"][0]["percent_of_total"] == 5000 / 9000 * 100
     assert body["top_categories"][1]["category_name"] == "Dining"
+    assert body["top_categories"][1]["spent_cents"] == 4000
+    assert body["top_categories"][1]["currency"] == "USD"
     assert [expense["merchant_name"] for expense in body["recent_expenses"]] == [
+        "Canadian Cafe",
         "Cafe",
         "Grocery Store",
         "Previous Month",
@@ -149,6 +183,16 @@ def test_dashboard_summary_rejects_invalid_month():
     client, _, _, _ = make_client_with_repositories()
 
     response = client.get("/dashboard/summary?year=2026&month=13")
+
+    assert response.status_code == 422
+
+    app.dependency_overrides.clear()
+
+
+def test_dashboard_summary_rejects_invalid_months_window():
+    client, _, _, _ = make_client_with_repositories()
+
+    response = client.get("/dashboard/summary?year=2026&month=6&months=0")
 
     assert response.status_code == 422
 

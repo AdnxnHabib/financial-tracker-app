@@ -1,6 +1,6 @@
 from collections import defaultdict
 from datetime import date
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional
 from uuid import UUID
 
 from app.repositories.accounts import InMemoryAccountRepository
@@ -32,11 +32,12 @@ class DashboardService:
         *,
         year: Optional[int] = None,
         month: Optional[int] = None,
+        months: Optional[int] = None,
     ) -> DashboardRead:
         today = date.today()
         selected_year = year if year is not None else today.year
         selected_month = month if month is not None else today.month
-        month_label = f"{selected_year:04d}-{selected_month:02d}"
+        selected_month_count = months if months is not None else 6
 
         transactions = self._transaction_repository.list_all()
         month_expenses = [
@@ -47,8 +48,10 @@ class DashboardService:
 
         return DashboardRead(
             monthly_expenses=self._build_monthly_expenses(
-                month_expenses,
-                month_label,
+                transactions,
+                selected_year,
+                selected_month,
+                selected_month_count,
             ),
             top_categories=self._build_top_categories(month_expenses),
             recent_expenses=self._build_recent_expenses(transactions),
@@ -69,44 +72,62 @@ class DashboardService:
     def _build_monthly_expenses(
         self,
         transactions: List[TransactionRead],
-        month_label: str,
+        year: int,
+        month: int,
+        months: int,
     ) -> List[MonthlyExpenseRead]:
-        totals_by_currency: Dict[CurrencyCode, int] = defaultdict(int)
+        month_labels = self._month_labels(year, month, months)
+        month_label_set = set(month_labels)
+        totals_by_month: Dict[str, int] = {
+            month_label: 0 for month_label in month_labels
+        }
+
         for transaction in transactions:
-            totals_by_currency[transaction.currency] += transaction.amount_cents
+            month_label = transaction.transaction_date.strftime("%Y-%m")
+            if (
+                transaction.transaction_type == TransactionType.EXPENSE
+                and month_label in month_label_set
+            ):
+                totals_by_month[month_label] += transaction.amount_cents
 
         return [
             MonthlyExpenseRead(
                 month=month_label,
-                spent_cents=spent_cents,
+                spent_cents=totals_by_month[month_label],
                 budget_cents=None,
-                currency=currency,
+                currency=CurrencyCode.USD,
             )
-            for currency, spent_cents in totals_by_currency.items()
+            for month_label in month_labels
+        ]
+
+    def _month_labels(self, year: int, month: int, months: int) -> List[str]:
+        end_month_index = year * 12 + month - 1
+        start_month_index = end_month_index - months + 1
+
+        return [
+            f"{month_index // 12:04d}-{month_index % 12 + 1:02d}"
+            for month_index in range(start_month_index, end_month_index + 1)
         ]
 
     def _build_top_categories(
         self,
         transactions: List[TransactionRead],
     ) -> List[CategorySpendRead]:
-        totals_by_currency: Dict[CurrencyCode, int] = defaultdict(int)
-        totals_by_category: Dict[Tuple[UUID, CurrencyCode], int] = defaultdict(int)
+        total_spent_cents = 0
+        totals_by_category: Dict[UUID, int] = defaultdict(int)
 
         for transaction in transactions:
             if transaction.category_id is None:
                 continue
-            totals_by_currency[transaction.currency] += transaction.amount_cents
-            totals_by_category[
-                (transaction.category_id, transaction.currency)
-            ] += transaction.amount_cents
+            total_spent_cents += transaction.amount_cents
+            totals_by_category[transaction.category_id] += transaction.amount_cents
 
         category_spend: List[CategorySpendRead] = []
-        for (category_id, currency), spent_cents in totals_by_category.items():
+        for category_id, spent_cents in totals_by_category.items():
             category = self._category_repository.get(category_id)
-            total_for_currency = totals_by_currency[currency]
             percent_of_total = (
-                spent_cents / total_for_currency * 100
-                if total_for_currency > 0
+                spent_cents / total_spent_cents * 100
+                if total_spent_cents > 0
                 else 0
             )
             category_spend.append(
@@ -116,7 +137,7 @@ class DashboardService:
                     color=category.color if category else "#4f5cf6",
                     spent_cents=spent_cents,
                     percent_of_total=percent_of_total,
-                    currency=currency,
+                    currency=CurrencyCode.USD,
                 )
             )
 
