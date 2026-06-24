@@ -3,6 +3,7 @@ from app.repositories.categories import InMemoryCategoryRepository
 from app.repositories.transactions import InMemoryTransactionRepository
 from app.services.accounts import AccountService
 from app.services.categories import CategoryService
+from app.services.dashboard import DashboardService
 from app.services.transactions import TransactionService
 
 
@@ -21,6 +22,14 @@ def get_category_service() -> CategoryService:
 
 def get_transaction_service() -> TransactionService:
     return TransactionService(
+        transaction_repository,
+        account_repository,
+        category_repository,
+    )
+
+
+def get_dashboard_service() -> DashboardService:
+    return DashboardService(
         transaction_repository,
         account_repository,
         category_repository,
