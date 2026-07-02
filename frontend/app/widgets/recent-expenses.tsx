@@ -29,6 +29,16 @@ export function RecentExpensesWidget({ data }: { data: DashboardData }) {
             </tr>
           </thead>
           <tbody>
+            {data.recentExpenses.length === 0 && (
+              <tr>
+                <td
+                  className="py-8 text-center text-[var(--ink-muted)]"
+                  colSpan={6}
+                >
+                  No recent expenses yet.
+                </td>
+              </tr>
+            )}
             {data.recentExpenses.map((expense) => (
               <tr
                 className="border-b border-[var(--line)] last:border-b-0"
@@ -44,7 +54,7 @@ export function RecentExpensesWidget({ data }: { data: DashboardData }) {
                 </td>
                 <td className="py-3 pr-4">{expense.paymentMethod}</td>
                 <td className="py-3 text-right font-bold">
-                  {formatCurrency(expense.amount)}
+                  {formatCurrency(expense.amount, expense.currency)}
                 </td>
               </tr>
             ))}

@@ -1,5 +1,9 @@
-import { dashboardData } from "./data/finance";
+import type { DashboardData } from "./data/finance";
+import { formatCurrency } from "./lib/format";
+import { getDashboardData } from "./lib/dashboard";
 import { dashboardWidgets } from "./widgets/registry";
+
+export const dynamic = "force-dynamic";
 
 const navigationGroups = [
   {
@@ -16,7 +20,22 @@ const navigationGroups = [
   },
 ];
 
-export default function Home() {
+export default async function Home() {
+  let dashboardData: DashboardData | null = null;
+  let loadError = false;
+
+  try {
+    dashboardData = await getDashboardData();
+  } catch {
+    loadError = true;
+  }
+
+  const currentMonth = dashboardData?.monthlyExpenses.at(-1);
+  const previousMonth = dashboardData?.monthlyExpenses.at(-2);
+  const topCategory = dashboardData?.categorySpend[0];
+
+  const monthlyTrend = getMonthlyTrend(currentMonth?.amount, previousMonth?.amount);
+
   return (
     <main className="min-h-screen p-4 text-[var(--ink)] md:p-6">
       <div className="mx-auto grid max-w-[90rem] overflow-hidden rounded-[28px] border border-white/70 bg-[var(--surface-muted)] shadow-2xl shadow-slate-300/60 lg:grid-cols-[17rem_1fr]">
@@ -85,30 +104,67 @@ export default function Home() {
             </div>
           </header>
 
-          <div className="mb-4 grid gap-4 md:grid-cols-3">
-            <SummaryMetric label="This month" value="$2,415" trend="38% under budget" />
-            <SummaryMetric label="Top category" value="Housing" trend="$1,425 spent" />
-            <SummaryMetric label="Transactions" value="128" trend="5 added this week" />
-          </div>
+          {loadError || !dashboardData ? (
+            <section className="widget-card border-red-200 p-6" role="alert">
+              <h2 className="text-lg font-bold">Dashboard unavailable</h2>
+              <p className="mt-2 text-sm text-[var(--ink-muted)]">
+                We couldn&apos;t load your financial summary. Make sure the API is
+                running, then refresh this page.
+              </p>
+            </section>
+          ) : (
+            <>
+              <div className="mb-4 grid gap-4 md:grid-cols-3">
+                <SummaryMetric
+                  label="This month"
+                  value={formatCurrency(
+                    currentMonth?.amount ?? 0,
+                    currentMonth?.currency,
+                  )}
+                  trend={monthlyTrend}
+                />
+                <SummaryMetric
+                  label="Top category"
+                  value={topCategory?.category ?? "No expenses"}
+                  trend={
+                    topCategory
+                      ? `${formatCurrency(topCategory.amount, topCategory.currency)} spent`
+                      : "Nothing categorized yet"
+                  }
+                />
+                <SummaryMetric
+                  label="Recent expenses"
+                  value={String(dashboardData.recentExpenses.length)}
+                  trend="Latest recorded activity"
+                />
+              </div>
 
-          <div className="dashboard-grid">
-            {dashboardWidgets.map((widget) => {
-              const WidgetComponent = widget.Component;
+              <div className="dashboard-grid">
+                {dashboardWidgets.map((widget) => {
+                  const WidgetComponent = widget.Component;
 
-              return (
-                <div
-                  className={widget.size === "wide" ? "min-w-0" : "min-w-0"}
-                  key={widget.id}
-                >
-                  <WidgetComponent data={dashboardData} />
-                </div>
-              );
-            })}
-          </div>
+                  return (
+                    <div className="min-w-0" key={widget.id}>
+                      <WidgetComponent data={dashboardData} />
+                    </div>
+                  );
+                })}
+              </div>
+            </>
+          )}
         </section>
       </div>
     </main>
   );
+}
+
+function getMonthlyTrend(current?: number, previous?: number): string {
+  if (current === undefined || previous === undefined || previous === 0) {
+    return "No prior spending to compare";
+  }
+
+  const percent = ((current - previous) / previous) * 100;
+  return `${Math.abs(percent).toFixed(1)}% ${percent <= 0 ? "under" : "over"} last month`;
 }
 
 function SummaryMetric({

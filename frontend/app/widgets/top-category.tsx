@@ -7,6 +7,19 @@ export function TopCategoryWidget({ data }: { data: DashboardData }) {
     (a, b) => b.amount - a.amount,
   )[0];
 
+  if (!topCategory || total === 0) {
+    return (
+      <section className="widget-card p-5">
+        <p className="text-sm font-semibold text-[var(--ink-muted)]">
+          Top category
+        </p>
+        <p className="mt-8 text-sm text-[var(--ink-muted)]">
+          No categorized expenses this month.
+        </p>
+      </section>
+    );
+  }
+
   const gradient = data.categorySpend
     .reduce(
       (segments, item) => {
@@ -37,7 +50,7 @@ export function TopCategoryWidget({ data }: { data: DashboardData }) {
           <h2 className="mt-1 text-2xl font-bold">{topCategory.category}</h2>
         </div>
         <p className="rounded-full bg-green-50 px-3 py-1 text-sm font-semibold text-[var(--green)]">
-          {formatCurrency(topCategory.amount)}
+          {formatCurrency(topCategory.amount, topCategory.currency)}
         </p>
       </div>
 
@@ -56,7 +69,7 @@ export function TopCategoryWidget({ data }: { data: DashboardData }) {
           {data.categorySpend.map((item) => (
             <div
               className="grid grid-cols-[0.75rem_minmax(0,1fr)_auto] items-center gap-3 text-sm"
-              key={item.category}
+              key={item.id}
             >
               <span
                 className="h-5 rounded-full"
@@ -65,7 +78,9 @@ export function TopCategoryWidget({ data }: { data: DashboardData }) {
               <span className="min-w-0 truncate font-medium">
                 {item.category}
               </span>
-              <span className="font-semibold">{formatCurrency(item.amount)}</span>
+              <span className="font-semibold">
+                {formatCurrency(item.amount, item.currency)}
+              </span>
             </div>
           ))}
         </div>
