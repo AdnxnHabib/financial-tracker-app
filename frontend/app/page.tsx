@@ -1,6 +1,11 @@
 import type { DashboardData } from "./data/finance";
+import { AddTransactionDialog } from "./components/add-transaction-dialog";
 import { formatCurrency } from "./lib/format";
 import { getDashboardData } from "./lib/dashboard";
+import {
+  getTransactionFormOptions,
+  type TransactionFormOptions,
+} from "./lib/transaction-options";
 import { dashboardWidgets } from "./widgets/registry";
 
 export const dynamic = "force-dynamic";
@@ -22,12 +27,23 @@ const navigationGroups = [
 
 export default async function Home() {
   let dashboardData: DashboardData | null = null;
+  let transactionFormOptions: TransactionFormOptions = {
+    accounts: [],
+    categories: [],
+  };
   let loadError = false;
+  let transactionFormOptionsError = false;
 
   try {
     dashboardData = await getDashboardData();
   } catch {
     loadError = true;
+  }
+
+  try {
+    transactionFormOptions = await getTransactionFormOptions();
+  } catch {
+    transactionFormOptionsError = true;
   }
 
   const currentMonth = dashboardData?.monthlyExpenses.at(-1);
@@ -98,9 +114,11 @@ export default async function Home() {
                   /
                 </span>
               </label>
-              <button className="h-11 rounded-md bg-[var(--blue)] px-4 font-bold text-white shadow-lg shadow-indigo-200">
-                Add expense
-              </button>
+              <AddTransactionDialog
+                accounts={transactionFormOptions.accounts}
+                categories={transactionFormOptions.categories}
+                disabled={transactionFormOptionsError}
+              />
             </div>
           </header>
 
