@@ -1,6 +1,7 @@
 import type { DashboardData } from "../data/finance";
+import { API_URL } from "./api";
 
-type DashboardResponse = {
+export type DashboardResponse = {
   monthly_expenses: Array<{
     month: string;
     spent_cents: number;
@@ -26,11 +27,6 @@ type DashboardResponse = {
     payment_method: string;
   }>;
 };
-
-const API_URL =
-  process.env.API_URL ??
-  process.env.NEXT_PUBLIC_API_URL ??
-  "http://127.0.0.1:8000";
 
 export async function getDashboardData(): Promise<DashboardData> {
   const response = await fetch(`${API_URL}/dashboard/summary`, {
