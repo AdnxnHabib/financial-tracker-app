@@ -1,4 +1,5 @@
 import type { DashboardData } from "./data/finance";
+import { AddAccountDialog } from "./components/add-account-dialog";
 import { AddTransactionDialog } from "./components/add-transaction-dialog";
 import { formatCurrency } from "./lib/format";
 import { getDashboardData } from "./lib/dashboard";
@@ -119,6 +120,7 @@ export default async function Home() {
                 categories={transactionFormOptions.categories}
                 disabled={transactionFormOptionsError}
               />
+              <AddAccountDialog />
             </div>
           </header>
 
@@ -132,7 +134,7 @@ export default async function Home() {
             </section>
           ) : (
             <>
-              <div className="mb-4 grid gap-4 md:grid-cols-3">
+              <div className="mb-4 grid gap-4 md:grid-cols-4">
                 <SummaryMetric
                   label="This month"
                   value={formatCurrency(
@@ -154,6 +156,11 @@ export default async function Home() {
                   label="Recent expenses"
                   value={String(dashboardData.recentExpenses.length)}
                   trend="Latest recorded activity"
+                />
+                <SummaryMetric
+                  label="Accounts"
+                  value={String(transactionFormOptions.accounts.length)}
+                  trend="Available for transactions"
                 />
               </div>
 
